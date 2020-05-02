@@ -1,7 +1,7 @@
 import * as THREE from '../libs/three.module.js';
+import { OrbitControls } from '../libs/OrbitControls.js';
 import { GLTFLoader } from '../libs/GLTFLoader.js';
 import { GUI } from '../libs/dat.gui.module.js';
-import mascotteTxt from './img/ch14.jpg';
 
 var canvas,
     clock,
@@ -13,12 +13,14 @@ var canvas,
     camera,
     scene,
     renderer,
+    controls,
     model,
     face;
 
 var api = {
     state: 'idle'
 };
+
 
 init();
 animate();
@@ -27,9 +29,13 @@ function init() {
 
     canvas = document.querySelector('#c');
 
-    camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.25, 100);
-    camera.position.set(-3, 4, 12);
-    camera.lookAt(new THREE.Vector3(0, 2, 0));
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    // renderer.shadowMap.enabled = true;
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    document.body.appendChild(renderer.domElement);
+
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xe0e0e0);
@@ -37,45 +43,78 @@ function init() {
 
     clock = new THREE.Clock();
 
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 2, 10);
+
+    // orbit controls
+    var controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 2, 0);
+    controls.enableKeys = false;
+    controls.enablePan = false;
+    controls.enableZoom = false;
+    controls.update();
+
+    // colors
+    let red = 0x9E0000;
+    let red_wall = 0xFF553B;
+    let yellow = 0xF2B233;
+    let green = 0x1F6652;
+    let white = 0xffffff;
+
     // lights
-
-    var light = new THREE.HemisphereLight(0xffffff, 0x444444);
-    light.position.set(0, 50, 0);
+    //var light = new THREE.AmbientLight(white, 1);
+    //scene.add(light);
+    var light = new THREE.HemisphereLight(white, yellow);
     scene.add(light);
 
-    light = new THREE.DirectionalLight(0xffffff);
-    light.position.set(0, 150, -150);
+    light = new THREE.DirectionalLight(white, 0.2);
+    light.position.set(0, 5, 5);
+    // light.castShadow = true;
     scene.add(light);
 
-    // ground
+    // walls
+    var planeGeo = new THREE.PlaneBufferGeometry(20, 10);
 
-    var mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2000, 2000), new THREE.MeshPhongMaterial({ color: 0x999999, depthWrite: false }));
-    mesh.rotation.x = -Math.PI / 2;
-    scene.add(mesh);
+    var planeTop = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: yellow }));
+    planeTop.scale.y = 2;
+    planeTop.position.y = 10;
+    planeTop.rotateX(Math.PI / 2);
+    scene.add(planeTop);
 
-    var grid = new THREE.GridHelper(200, 40, 0x000000, 0x000000);
-    grid.material.opacity = 0.2;
-    grid.material.transparent = true;
-    scene.add(grid);
+    var planeBottom = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: green }));
+    planeBottom.scale.y = 2;
+    planeBottom.rotateX(- Math.PI / 2);
+    planeBottom.receiveShadow = true;
+    scene.add(planeBottom);
 
+    var planeFront = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
+    planeFront.position.z = 10;
+    planeFront.position.y = planeFront.position.z / 2;
+    planeFront.rotateY(Math.PI);
+    scene.add(planeFront);
 
-    // sphere
-    let geometry = new THREE.SphereGeometry(8, 32, 32);
-    let material = new THREE.MeshBasicMaterial({ color: 0x9bffaf }); // 0xf2ce2e
-    let sphere = new THREE.Mesh(geometry, material);
+    var planeRight = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
+    planeRight.position.x = 10;
+    planeRight.position.y = planeRight.position.x / 2;
+    planeRight.rotateY(- Math.PI / 2);
+    scene.add(planeRight);
 
-    sphere.position.z = -15;
-    sphere.position.y = 3;
-    sphere.position.x = 1;
-    scene.add(sphere);
+    var planeBack = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
+    planeBack.position.z = - 10;
+    planeBack.position.y = - planeBack.position.z / 2;
+    scene.add(planeBack);
+
+    var planeLeft = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
+    planeLeft.position.x = - 10;
+    planeLeft.position.y = - planeLeft.position.x / 2;
+    planeLeft.rotateY(Math.PI / 2);
+    scene.add(planeLeft);
+
 
     // model
-    let mascotte_txt = new THREE.TextureLoader().load(mascotteTxt);
-    mascotte_txt.flipY = false;
-    const mascotte_mtl = new THREE.MeshPhongMaterial({ map: mascotte_txt, color: 0xffffff, skinning: true });
 
     var loader = new GLTFLoader();
-    loader.load('../build/images/mascotte5.glb', function (gltf) {
+    loader.load('../build/images/Binioufou8.gltf', function (gltf) {
 
         model = gltf.scene;
         scene.add(model);
@@ -84,12 +123,11 @@ function init() {
             if (o.isMesh) {
                 o.castShadow = true;
                 o.receiveShadow = true;
-                o.material = mascotte_mtl;
             }
         });
 
-        model.scale.set(4, 4, 4);
-        model.position.y = 1;
+        model.scale.set(1, 1, 1);
+        model.position.z = 1;
         createGUI(model, gltf.animations);
 
     }, undefined, function (e) {
@@ -98,21 +136,17 @@ function init() {
     });
 
 
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.outputEncoding = THREE.sRGBEncoding;
-    document.body.appendChild(renderer.domElement);
-
     window.addEventListener('resize', onWindowResize, false);
+
+
 
 }
 
 
 function createGUI(model, animations) {
 
-    var states = ['idle', 'samba'];
-    var emotes = ['idle', 'samba'];
+    var states = ['shakefist_updated', 'Tada'];
+    var emotes = ['Waving_updated', 'Tada'];
 
     gui = new GUI();
 
@@ -189,8 +223,8 @@ function createGUI(model, animations) {
     // var expressionFolder = gui.addFolder('Expressions');
     // for (var i = 0; i < expressions.length; {expressionFolder.add(face.morphTargetInfluences, i, 0, 1, 0.01).name(expressions[i]);}
 
-    activeAction = actions['idle'];
-    activeAction.play();
+    activeAction = actions['Tada'];
+    // activeAction.play();
 
     // expressionFolder.open();
 
@@ -232,7 +266,7 @@ function animate() {
 
 
     requestAnimationFrame(animate);
-
+    //controls.update();
     renderer.render(scene, camera);
 
 
