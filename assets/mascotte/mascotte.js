@@ -17,9 +17,16 @@ var canvas,
     model,
     face;
 
-var api = {
-    state: 'idle'
-};
+var cubeCamera, discoBall;
+
+
+var api = { state: 'idle' };
+var red = 0x9E0000;
+var red_wall = 0xBC2727;
+var yellow = 0xF2B233;
+var green = 0x1F6652;
+var white = 0xffffff;
+var black = 0x000000;
 
 
 init();
@@ -30,7 +37,7 @@ function init() {
     canvas = document.querySelector('#c');
 
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    // renderer.shadowMap.enabled = true;
+    //renderer.shadowMap.enabled = true;
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.outputEncoding = THREE.sRGBEncoding;
@@ -44,7 +51,7 @@ function init() {
     clock = new THREE.Clock();
 
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 2, 10);
+    camera.position.set(0, 2, 12);
 
     // orbit controls
     var controls = new OrbitControls(camera, renderer.domElement);
@@ -54,61 +61,72 @@ function init() {
     controls.enableZoom = false;
     controls.update();
 
-    // colors
-    let red = 0x9E0000;
-    let red_wall = 0xFF553B;
-    let yellow = 0xF2B233;
-    let green = 0x1F6652;
-    let white = 0xffffff;
-
     // lights
-    //var light = new THREE.AmbientLight(white, 1);
-    //scene.add(light);
-    var light = new THREE.HemisphereLight(white, yellow);
+    var light = new THREE.AmbientLight(white, 1);
+    // scene.add(light);
+
+    var light = new THREE.HemisphereLight(white, yellow, 0.7);
     scene.add(light);
 
-    light = new THREE.DirectionalLight(white, 0.2);
-    light.position.set(0, 5, 5);
-    // light.castShadow = true;
+    light = new THREE.DirectionalLight(white, 0.5);
+    light.position.set(-6, 2, 0);
     scene.add(light);
 
-    // walls
-    var planeGeo = new THREE.PlaneBufferGeometry(20, 10);
+    light = new THREE.DirectionalLight(white, 0.5);
+    light.position.set(6, 2, 0);
+    scene.add(light);
 
-    var planeTop = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: yellow }));
-    planeTop.scale.y = 2;
-    planeTop.position.y = 10;
-    planeTop.rotateX(Math.PI / 2);
-    scene.add(planeTop);
+    roomGeo(20, 10, 2);
 
-    var planeBottom = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: green }));
-    planeBottom.scale.y = 2;
-    planeBottom.rotateX(- Math.PI / 2);
-    planeBottom.receiveShadow = true;
-    scene.add(planeBottom);
+    var carpetGeo = new THREE.CircleGeometry(5, 64);
+    var carpet = new THREE.Mesh(
+        carpetGeo,
+        new THREE.MeshPhongMaterial({ color: yellow }));
+    carpet.position.y = 0.01;
+    carpet.rotateX(- Math.PI / 2);
+    //carpet.receiveShadow = true;
+    scene.add(carpet);
 
-    var planeFront = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
-    planeFront.position.z = 10;
-    planeFront.position.y = planeFront.position.z / 2;
-    planeFront.rotateY(Math.PI);
-    scene.add(planeFront);
+    //var cubeCamera = new THREE.CubeCamera(1, 100000, 128);
+    //cubeCamera.renderTarget.texture.generateMipmaps = true;
+    //cubeCamera.renderTarget.texture.minFilter = THREE.LinearMipmapLinearFilter;
+    //scene.add(cubeCamera);
+    var discoMaterial = new THREE.MeshPhysicalMaterial({
+        color: white,
+        emissive: 0x939393,
+        metalness: 1,
+        roughness: 0.5,
+        flatShading: true,
+        reflectivity: 1.0,
+        premultipliedAlpha: true
+    });
+    var discoGeometry = new THREE.SphereBufferGeometry(1.2, 24, 24);
+    discoBall = new THREE.Mesh(discoGeometry, discoMaterial);
+    discoBall.position.y = 7;
+    scene.add(discoBall);
 
-    var planeRight = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
-    planeRight.position.x = 10;
-    planeRight.position.y = planeRight.position.x / 2;
-    planeRight.rotateY(- Math.PI / 2);
-    scene.add(planeRight);
+    // flyer back
+    var video = document.getElementById('video');
+    video.play();
+    var texture = new THREE.VideoTexture(video);
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.format = THREE.RGBFormat;
 
-    var planeBack = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
-    planeBack.position.z = - 10;
-    planeBack.position.y = - planeBack.position.z / 2;
-    scene.add(planeBack);
+    var flyerBack = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry(4.5, 6),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, map: texture }));
+    flyerBack.position.set(-5.5, 5, -9.9);
+    scene.add(flyerBack);
 
-    var planeLeft = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
-    planeLeft.position.x = - 10;
-    planeLeft.position.y = - planeLeft.position.x / 2;
-    planeLeft.rotateY(Math.PI / 2);
-    scene.add(planeLeft);
+    // flyer back
+    var flyerRight = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry(6, 8),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, map: texture }));
+    flyerRight.position.set(9.9, 5, 2);
+    flyerRight.rotateY(- Math.PI / 2);
+    scene.add(flyerRight);
+
 
 
     // model
@@ -127,7 +145,8 @@ function init() {
         });
 
         model.scale.set(1, 1, 1);
-        model.position.z = 1;
+        model.position.z = 4;
+        // model.position.y = 0.1;
         createGUI(model, gltf.animations);
 
     }, undefined, function (e) {
@@ -139,6 +158,48 @@ function init() {
     window.addEventListener('resize', onWindowResize, false);
 
 
+
+}
+
+function roomGeo(width, height, scaleY) {
+
+    // walls
+    var planeGeo = new THREE.PlaneBufferGeometry(width, height);
+
+    var planeTop = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: yellow }));
+    planeTop.scale.y = scaleY;
+    planeTop.position.y = height;
+    planeTop.rotateX(Math.PI / 2);
+    scene.add(planeTop);
+
+    var planeBottom = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: green }));
+    planeBottom.scale.y = scaleY;
+    planeBottom.rotateX(- Math.PI / 2);
+    planeBottom.receiveShadow = true;
+    scene.add(planeBottom);
+
+    var planeFront = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
+    planeFront.position.z = height;
+    planeFront.position.y = planeFront.position.z / 2;
+    planeFront.rotateY(Math.PI);
+    scene.add(planeFront);
+
+    var planeRight = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
+    planeRight.position.x = height;
+    planeRight.position.y = planeRight.position.x / 2;
+    planeRight.rotateY(- Math.PI / 2);
+    scene.add(planeRight);
+
+    var planeBack = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
+    planeBack.position.z = - height;
+    planeBack.position.y = - planeBack.position.z / 2;
+    scene.add(planeBack);
+
+    var planeLeft = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
+    planeLeft.position.x = - height;
+    planeLeft.position.y = - planeLeft.position.x / 2;
+    planeLeft.rotateY(Math.PI / 2);
+    scene.add(planeLeft);
 
 }
 
@@ -252,22 +313,40 @@ function onWindowResize() {
 
     renderer.setSize(window.innerWidth, window.innerHeight);
 
+    controls.handleResize();
+
 }
 
 //
 
+
+
 function animate() {
 
-    var dt = clock.getDelta();
+    requestAnimationFrame(animate);
+
+    render();
+
+}
+
+function render() {
+
+
+    var delta = clock.getDelta();
+
+    // controls.update();
 
     if (mixer) {
-        mixer.update(dt);
+
+        mixer.update(delta);
+
     }
 
+    //discoBall.visible = false;
+    // cubeCamera.update(renderer, scene);
+    //discoBall.visible = true;
+    discoBall.rotation.y += 0.005;
 
-    requestAnimationFrame(animate);
-    //controls.update();
     renderer.render(scene, camera);
-
 
 }
