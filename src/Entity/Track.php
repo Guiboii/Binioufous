@@ -31,6 +31,11 @@ class Track
      */
     private $artist;
 
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $trackFilename;
+
 
     public function getId(): ?int
     {
@@ -69,6 +74,18 @@ class Track
     public function setArtist(?Artist $artist): self
     {
         $this->artist = $artist;
+
+        return $this;
+    }
+
+    public function getTrackFilename(): ?string
+    {
+        return $this->trackFilename;
+    }
+
+    public function setTrackFilename(?string $trackFilename): self
+    {
+        $this->trackFilename = $trackFilename;
 
         return $this;
     }

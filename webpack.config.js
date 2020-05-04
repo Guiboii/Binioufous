@@ -19,6 +19,7 @@ Encore
         to: 'images/[name].[ext]',
         pattern: /\.(glb)$/
     })
+
     /*
      * ENTRY CONFIG
      *

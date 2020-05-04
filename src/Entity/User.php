@@ -9,6 +9,10 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
+ * @UniqueEntity(
+ fields={"email"},
+message="This email is already used by another user, please change"
+)
  */
 class User implements UserInterface
 {
@@ -16,28 +20,24 @@ class User implements UserInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @UniqueEntity(
-     *  fields={"email"}
-     *  message="This email is already used by another user, please change"
-     *)
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Assert\NotBlank(message="This field couldn't be empty")
+     * NotBlank(message="This field couldn't be empty")
      */
     private $firstName;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Assert\NotBlank(message="This field couldn't be empty")
+     * NotBlank(message="This field couldn't be empty")
      */
     private $lastName;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Assert\Email(message="Please, use a valid email adress")
+     * Email(message="Please enter a valid email address")
      */
     private $email;
 
