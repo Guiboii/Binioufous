@@ -17,7 +17,7 @@ Encore
     .copyFiles({
         from: './assets',
         to: 'images/[name].[ext]',
-        pattern: /\.(glb|gltf|gif|mp4)$/
+        pattern: /\.(glb|gltf|gif|png|mp4)$/
     })
     /*
      * ENTRY CONFIG
@@ -29,7 +29,8 @@ Encore
      * and one CSS file (e.g. app.css) if your JavaScript imports CSS.
      */
     .addEntry('app', './assets/main/app.js')
-    //.addEntry('page1', './assets/js/page1.js')
+    .addEntry('schedule', './assets/music/music.js')
+    .addEntry('mascotte', './assets/mascotte/mascotte.js')
     //.addEntry('page2', './assets/js/page2.js')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
