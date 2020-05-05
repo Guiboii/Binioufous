@@ -4,9 +4,15 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
+ * @UniqueEntity(
+ fields={"email"},
+message="This email is already used by another user, please change"
+)
  */
 class User implements UserInterface
 {
@@ -19,16 +25,19 @@ class User implements UserInterface
 
     /**
      * @ORM\Column(type="string", length=255)
+     * NotBlank(message="This field couldn't be empty")
      */
     private $firstName;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * NotBlank(message="This field couldn't be empty")
      */
     private $lastName;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * Email(message="Please enter a valid email address")
      */
     private $email;
 
