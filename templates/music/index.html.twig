@@ -36,4 +36,13 @@
     </table>
 
     <a href="{{ path('track_new') }}">Create new</a>
+
+
+<div class="loading" id="js-loader"><div class="loader"></div></div>
+<div class="mascotte"><canvas id="c"></canvas></div>
+<video id="video" loop="" crossorigin="anonymous" playsinline="" style="display:none" autoplay="true" muted="muted"><source src="../build/images/waving_toGif.mp4" type="video/mp4"></video>
+{% endblock %}
+
+{% block javascripts %}
+        {{ encore_entry_script_tags('music') }}
 {% endblock %}

@@ -1,6 +1,7 @@
 import * as THREE from '../libs/three.module.js';
 import { OrbitControls } from '../libs/OrbitControls.js';
 import { GLTFLoader } from '../libs/GLTFLoader.js';
+import { FBXLoader } from '../libs/FBXLoader.js';
 
 var canvas,
     clock,
@@ -17,7 +18,9 @@ var canvas,
     idle,
     discoBall,
     raycaster = new THREE.Raycaster(),
-    loaderAnim = document.getElementById('js-loader');;
+    loaderAnim = document.querySelector('.loading');
+
+var group = new THREE.Group();
 
 
 var api = { state: 'idle' };
@@ -133,13 +136,14 @@ function init() {
         let fileAnimations = gltf.animations;
         model.scale.set(1, 1, 1);
         model.position.z = 4;
+
         scene.add(model);
+        console.log(gltf.scene);
+
         //createMix(model, gltf.animations);
 
         mixer = new THREE.AnimationMixer(model);
-
         let clips = fileAnimations.filter(val => val.name !== 'idle');
-
         possibleAnims = clips.map(val => {
             let clip = THREE.AnimationClip.findByName(clips, val.name);
             clip = mixer.clipAction(clip);
@@ -153,6 +157,9 @@ function init() {
         console.error(e);
     });
 
+
+
+
     // desk 
     var loader = new GLTFLoader();
     loader.load('../build/images/Desk1.gltf', function (gltf) {
@@ -163,9 +170,12 @@ function init() {
         model.rotateY(Math.PI);
         model.name = 'desk';
         scene.add(model);
+        console.log(gltf.scene);
     }, undefined, function (e) {
         console.error(e);
     });
+
+
     // sound system 
     var loader = new GLTFLoader();
     loader.load('../build/images/SoundSystem.gltf', function (gltf) {
@@ -176,12 +186,13 @@ function init() {
         model.position.set(-6, 0, 2);
         model.rotateY(Math.PI / 2);
         scene.add(model);
+        console.log(gltf.scene);
+        loaderAnim.className = "isloaded";
     }, undefined, function (e) {
         console.error(e);
     });
 
     window.addEventListener('resize', onWindowResize, false);
-    loaderAnim.remove();
 
 }
 
@@ -217,6 +228,7 @@ function roomGeo(width, height, scaleY) {
     var planeBack = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
     planeBack.position.z = - height;
     planeBack.position.y = - planeBack.position.z / 2;
+    planeBack.name = 'planeBack';
     scene.add(planeBack);
 
     var planeLeft = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
@@ -314,18 +326,28 @@ function raycast(e, touch = false) {
     }
     // update the picking ray with the camera and mouse position
     raycaster.setFromCamera(mouse, camera);
-
     // calculate objects intersecting the picking ray
     var intersects = raycaster.intersectObjects(scene.children, true);
     console.log(intersects);
+    if (intersects.length > 0) {
+        console.log("Intersected object:", intersects.length);
+        intersects[0].object.material.color.setHex(Math.random() * 0xffffff);
+    }
+
     if (intersects[0]) {
         var object = intersects[0].object;
         console.log(object.name);
-        if (object.name === 'binioufou') {
+        if (object.name === 'Binioufou') {
             if (!currentlyAnimating) {
                 currentlyAnimating = true;
                 playOnClick();
             }
+        }
+        else if (object.parent.name === 'Soundsystem') {
+            location.href = "/music";
+        }
+        else if (object.parent.name === 'Desk002') {
+            location.href = "/story";
         }
         else if (object.name === 'schedule') {
             location.href = "/schedule";
@@ -335,6 +357,7 @@ function raycast(e, touch = false) {
         }
     }
 }
+
 
 function playOnClick() {
     let anim = Math.floor(Math.random() * possibleAnims.length) + 0;

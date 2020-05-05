@@ -19,7 +19,7 @@ var canvas,
     idle,
     discoBall,
     raycaster = new THREE.Raycaster(),
-    loaderAnim = document.getElementById('js-loader');;
+    loaderAnim = document.querySelector('.loading');
 
 
 var api = { state: 'idle' };
@@ -36,9 +36,7 @@ animate();
 function init() {
 
     canvas = document.querySelector('#c');
-
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    //renderer.shadowMap.enabled = true;
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.outputEncoding = THREE.sRGBEncoding;
@@ -47,7 +45,6 @@ function init() {
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xe0e0e0);
-    scene.fog = new THREE.Fog(0xe0e0e0, 20, 100);
 
     clock = new THREE.Clock();
 
@@ -56,77 +53,21 @@ function init() {
     camera.rotateY(Math.PI / 2);
 
 
-
     // lights
-    var light = new THREE.AmbientLight(white, 1);
-    // scene.add(light);
+
 
     var light = new THREE.HemisphereLight(white, yellow, 0.7);
     scene.add(light);
 
-    light = new THREE.DirectionalLight(white, 0.5);
-    light.position.set(-6, 2, 0);
-    scene.add(light);
-
     light = new THREE.DirectionalLight(white, 0.1);
+    light.position.set(-6, 2, 0);
+    //scene.add(light);
+
+    light = new THREE.DirectionalLight(white, 0.3);
     light.position.set(6, 2, 0);
     scene.add(light);
 
     roomGeo(20, 10, 2);
-
-    var carpetGeo = new THREE.CircleGeometry(5, 64);
-    var carpet = new THREE.Mesh(
-        carpetGeo,
-        new THREE.MeshPhongMaterial({ color: yellow }));
-    carpet.position.y = 0.01;
-    carpet.rotateX(- Math.PI / 2);
-    //carpet.receiveShadow = true;
-    scene.add(carpet);
-
-    //var cubeCamera = new THREE.CubeCamera(1, 100000, 128);
-    //cubeCamera.renderTarget.texture.generateMipmaps = true;
-    //cubeCamera.renderTarget.texture.minFilter = THREE.LinearMipmapLinearFilter;
-    //scene.add(cubeCamera);
-    var discoMaterial = new THREE.MeshPhysicalMaterial({
-        color: white,
-        emissive: 0x939393,
-        metalness: 1,
-        roughness: 0.5,
-        flatShading: true,
-        reflectivity: 1.0,
-        premultipliedAlpha: true
-    });
-    var discoGeometry = new THREE.SphereBufferGeometry(1.2, 24, 24);
-    discoBall = new THREE.Mesh(discoGeometry, discoMaterial);
-    discoBall.position.y = 7;
-    discoBall.name = "disco";
-    scene.add(discoBall);
-
-    // flyer back
-    var video = document.getElementById('video');
-    // video.play();
-    var texture = new THREE.VideoTexture(video);
-    texture.minFilter = THREE.LinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    texture.format = THREE.RGBFormat;
-
-    var flyerBack = new THREE.Mesh(
-        new THREE.PlaneBufferGeometry(4.5, 6),
-        new THREE.MeshBasicMaterial({ color: 0xffffff, map: texture }));
-    flyerBack.position.set(-5.5, 5, -9.9);
-    flyerBack.name = "joinUS";
-    scene.add(flyerBack);
-
-
-    // flyer right
-    var texture = new THREE.TextureLoader().load("../build/images/flyer002.png");
-    var flyerRight = new THREE.Mesh(
-        new THREE.PlaneBufferGeometry(6, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffffff, map: texture }));
-    flyerRight.position.set(9.9, 5, 2);
-    flyerRight.rotateY(- Math.PI / 2);
-    flyerRight.name = "schedule";
-    scene.add(flyerRight);
 
 
     // model
@@ -156,20 +97,6 @@ function init() {
         console.error(e);
     });
 
-    // desk 
-    var loader = new GLTFLoader();
-    loader.load('../build/images/Desk1.gltf', function (gltf) {
-
-        model = gltf.scene;
-        model.name = "desk";
-        scene.add(model);
-        model.scale.set(0.5, 0.5, 0.5);
-        model.position.set(6, 0.1, -6);
-        model.rotateY(Math.PI);
-        model.name = 'desk'
-    }, undefined, function (e) {
-        console.error(e);
-    });
     // sound system 
     var loader = new GLTFLoader();
     loader.load('../build/images/SoundSystem.gltf', function (gltf) {
@@ -180,12 +107,12 @@ function init() {
         model.scale.set(0.7, 0.7, 0.7);
         model.position.set(-6, 0, 2);
         model.rotateY(Math.PI / 2);
+        loaderAnim.className = "isloaded";
     }, undefined, function (e) {
         console.error(e);
     });
 
     window.addEventListener('resize', onWindowResize, false);
-    loaderAnim.remove();
 
 
 }
@@ -389,12 +316,9 @@ function animate() {
 function render() {
 
     var delta = clock.getDelta();
-    // controls.update();
     if (mixer) {
         mixer.update(delta);
     }
-    discoBall.rotation.y += 0.005;
-
 
     renderer.render(scene, camera);
 
