@@ -84,7 +84,7 @@ function init() {
     // model
 
     var loader = new GLTFLoader();
-    loader.load('../build/images/Binioufou_Fina.gltf', function (gltf) {
+    loader.load('../build/images/Binioufou_Final.gltf', function (gltf) {
 
         model = gltf.scene;
         let fileAnimations = gltf.animations;

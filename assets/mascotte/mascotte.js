@@ -10,6 +10,7 @@ var canvas,
     previousAction,
     currentlyAnimating,
     next,
+    carpet,
     possibleAnims,
     camera,
     scene,
@@ -82,6 +83,7 @@ function init() {
         new THREE.MeshPhongMaterial({ color: yellow }));
     carpet.position.y = 0.01;
     carpet.rotateX(- Math.PI / 2);
+    carpet.name = "carpet";
     scene.add(carpet);
 
     // discoball
@@ -130,7 +132,7 @@ function init() {
     // model
 
     var loader = new GLTFLoader();
-    loader.load('../build/images/Binioufou_only.gltf', function (gltf) {
+    loader.load('../build/images/Binioufou_Final.gltf', function (gltf) {
 
         model = gltf.scene;
         let fileAnimations = gltf.animations;
@@ -152,8 +154,10 @@ function init() {
         });
         let idleAnim = THREE.AnimationClip.findByName(fileAnimations, 'idle');
         let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'Waving_updated');
+        let carpetAnim = THREE.AnimationClip.findByName(fileAnimations, 'twist');
         idle = mixer.clipAction(idleAnim);
         next = mixer.clipAction(nextAnim);
+        carpet = mixer.clipAction(carpetAnim);
         idle.play();
 
     }, undefined, function (e) {
@@ -348,7 +352,7 @@ function raycast(e, touch = false) {
 
     if (intersects[0]) {
         var object = intersects[0].object;
-        console.log(object.parent.name);
+        console.log(object.name);
 
         if (object.name === 'planeBack') {
             if (!currentlyAnimating) {

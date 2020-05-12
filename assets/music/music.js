@@ -75,7 +75,7 @@ function init() {
     // model
 
     var loader = new GLTFLoader();
-    loader.load('../build/images/Binioufou_Fina.gltf', function (gltf) {
+    loader.load('../build/images/Binioufou_Final.gltf', function (gltf) {
 
         model = gltf.scene;
         let fileAnimations = gltf.animations;
@@ -93,7 +93,7 @@ function init() {
         //createGUI(model, gltf.animations);
         mixer = new THREE.AnimationMixer(model);
         let idleAnim = THREE.AnimationClip.findByName(fileAnimations, 'samba_2');
-        let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'knocked');
+        let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'playing');
         idle = mixer.clipAction(idleAnim);
         next = mixer.clipAction(nextAnim);
         idle.play();

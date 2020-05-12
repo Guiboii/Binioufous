@@ -84,7 +84,7 @@ function init() {
     // model
 
     var loader = new GLTFLoader();
-    loader.load('../build/images/Binioufou_Fina.gltf', function (gltf) {
+    loader.load('../build/images/Binioufou_Final.gltf', function (gltf) {
 
         model = gltf.scene;
         let fileAnimations = gltf.animations;
@@ -103,7 +103,7 @@ function init() {
             clip = mixer.clipAction(clip);
             return clip;
         });
-        let idleAnim = THREE.AnimationClip.findByName(fileAnimations, 'idle');
+        let idleAnim = THREE.AnimationClip.findByName(fileAnimations, 'twist');
         let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'taada');
         idle = mixer.clipAction(idleAnim);
         next = mixer.clipAction(nextAnim);

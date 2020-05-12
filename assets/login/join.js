@@ -79,6 +79,7 @@ function init() {
         new THREE.MeshPhongMaterial({ color: yellow }));
     carpet.position.y = 0.01;
     carpet.rotateX(- Math.PI / 2);
+    carpet.name = "carpet";
     scene.add(carpet);
 
     // discoball
@@ -127,7 +128,7 @@ function init() {
     // model
 
     var loader = new GLTFLoader();
-    loader.load('../build/images/Binioufou_only.gltf', function (gltf) {
+    loader.load('../build/images/Binioufou_Final.gltf', function (gltf) {
 
         model = gltf.scene;
         let fileAnimations = gltf.animations;
