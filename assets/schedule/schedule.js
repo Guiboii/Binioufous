@@ -9,12 +9,14 @@ var canvas,
     activeAction,
     previousAction,
     possibleAnims,
+    currentlyAnimating,
     camera,
     scene,
     renderer,
     controls,
     model,
     idle,
+    next,
     discoBall,
     raycaster = new THREE.Raycaster(),
     loaderAnim = document.querySelector('.loading');
@@ -82,7 +84,7 @@ function init() {
     // model
 
     var loader = new GLTFLoader();
-    loader.load('../build/images/Binioufou_only.gltf', function (gltf) {
+    loader.load('../build/images/Binioufou_Fina.gltf', function (gltf) {
 
         model = gltf.scene;
         let fileAnimations = gltf.animations;
@@ -96,15 +98,17 @@ function init() {
 
         mixer = new THREE.AnimationMixer(model);
 
-        let clips = fileAnimations.filter(val => val.name !== 'idle');
+        let clips = fileAnimations.filter(val => val.name !== 'walkturn');
 
         possibleAnims = clips.map(val => {
             let clip = THREE.AnimationClip.findByName(clips, val.name);
             clip = mixer.clipAction(clip);
             return clip;
         });
-        let idleAnim = THREE.AnimationClip.findByName(fileAnimations, 'idle');
+        let idleAnim = THREE.AnimationClip.findByName(fileAnimations, 'walkturn');
+        let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'knocked');
         idle = mixer.clipAction(idleAnim);
+        next = mixer.clipAction(nextAnim);
         idle.play();
 
     }, undefined, function (e) {
@@ -155,6 +159,7 @@ function roomGeo(width, height, scaleY) {
 
     var planeRight = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
     planeRight.position.x = height;
+    planeRight.name = "planeRight"
     planeRight.position.y = planeRight.position.x / 2;
     planeRight.rotateY(- Math.PI / 2);
     scene.add(planeRight);
@@ -266,10 +271,10 @@ function raycast(e, touch = false) {
     if (intersects[0]) {
         var object = intersects[0].object;
         console.log(object.name);
-        if (object.name === 'binioufou') {
+        if (object.name === 'planeRight') {
             if (!currentlyAnimating) {
                 currentlyAnimating = true;
-                playOnClick();
+                playModifierAnimation(idle, 0.25, next, 0.25);
             }
         }
         else if (object.name === 'schedule') {

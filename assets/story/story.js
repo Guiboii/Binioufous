@@ -8,6 +8,8 @@ var canvas,
     actions,
     activeAction,
     previousAction,
+    currentlyAnimating,
+    next,
     possibleAnims,
     camera,
     scene,
@@ -48,7 +50,7 @@ function init() {
     clock = new THREE.Clock();
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
     // camera.position.set(0, 2, 12);
-    camera.position.set(6, 3, -7.8);
+    camera.position.set(5.9, 2.8, -7.8);
     camera.rotateY(- Math.PI);
 
 
@@ -76,18 +78,18 @@ function init() {
     flyerRight.position.set(9.9, 5, 2);
     flyerRight.rotateY(- Math.PI / 2);
     flyerRight.name = "schedule";
-    scene.add(flyerRight);
+    //scene.add(flyerRight);
 
 
     // model
 
     var loader = new GLTFLoader();
-    loader.load('../build/images/Binioufou_only.gltf', function (gltf) {
+    loader.load('../build/images/Binioufou_Fina.gltf', function (gltf) {
 
         model = gltf.scene;
         let fileAnimations = gltf.animations;
         model.scale.set(0.15, 0.15, 0.15);
-        model.position.set(6.8, 2.53, -6.5);
+        model.position.set(6.7, 2.25, -6.5);
         model.rotateY(- Math.PI + 20);
         scene.add(model);
         //createMix(model, gltf.animations);
@@ -102,7 +104,9 @@ function init() {
             return clip;
         });
         let idleAnim = THREE.AnimationClip.findByName(fileAnimations, 'idle');
+        let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'taada');
         idle = mixer.clipAction(idleAnim);
+        next = mixer.clipAction(nextAnim);
         idle.play();
 
     }, undefined, function (e) {
@@ -111,11 +115,11 @@ function init() {
 
     // desk 
     var loader = new GLTFLoader();
-    loader.load('../build/images/Desk1.gltf', function (gltf) {
+    loader.load('../build/images/Desk.gltf', function (gltf) {
 
         model = gltf.scene;
         model.scale.set(0.5, 0.5, 0.5);
-        model.position.set(6, 0.1, -6);
+        model.position.set(6.5, 0, -5.5);
         model.rotateY(Math.PI);
         model.name = 'desk';
         scene.add(model);
@@ -264,10 +268,10 @@ function raycast(e, touch = false) {
     if (intersects[0]) {
         var object = intersects[0].object;
         console.log(object.name);
-        if (object.name === 'binioufou') {
+        if (object.parent.name === 'Desk') {
             if (!currentlyAnimating) {
                 currentlyAnimating = true;
-                playOnClick();
+                playModifierAnimation(idle, 0.25, next, 0.25);
             }
         }
         else if (object.name === 'schedule') {

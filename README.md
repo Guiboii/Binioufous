@@ -4,7 +4,8 @@
 
 ```
 composer require symfony/webpack-encore-bundle
-yarn install
+rm -rf node_modules
+npm install
 ```
 
 #### To compile and launch:

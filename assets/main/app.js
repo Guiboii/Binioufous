@@ -7,9 +7,8 @@
 
 // any CSS you import will output into a single css file (app.css in this case)
 
+// import { $, jQuery } from 'jquery';
+// import "../../node_modules/bootstrap/dist/js/bootstrap.js";
+import "../../node_modules/bootstrap/dist/css/bootstrap.css";
 import '../main/app.css';
-
-// Need jQuery? Install it with "yarn add jquery", then uncomment to import it.
-// import $ from 'jquery';
-
 

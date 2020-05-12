@@ -1,10 +1,15 @@
-@import '../../node_modules/bootstrap/dist/css/bootstrap.css';
 body {
     background-color: rgb(158, 174, 179);
 }
 
+.btn-link, a,
+.btn-link:hover, a:hover {
+    color: #1F6652;
+}
+
 #c {
     position: absolute;
+    z-index: 800;
     top: 0;
     width: 100%;
     height: 100%;
@@ -67,4 +72,9 @@ canvas {
     transition-duration: 0.3s;
     transition-delay: 0.5s;
     transition-timing-function: ease;
+}
+
+.list-group-item.active {
+    background-color: #1F6652;
+    border-color: #1F6652;
 }

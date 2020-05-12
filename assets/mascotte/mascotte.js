@@ -1,7 +1,6 @@
 import * as THREE from '../libs/three.module.js';
 import { OrbitControls } from '../libs/OrbitControls.js';
 import { GLTFLoader } from '../libs/GLTFLoader.js';
-import { FBXLoader } from '../libs/FBXLoader.js';
 
 var canvas,
     clock,
@@ -9,18 +8,19 @@ var canvas,
     actions,
     activeAction,
     previousAction,
+    currentlyAnimating,
+    next,
     possibleAnims,
     camera,
     scene,
     renderer,
-    controls,
     model,
     idle,
     discoBall,
+    mouse = new THREE.Vector2(),
     raycaster = new THREE.Raycaster(),
     loaderAnim = document.querySelector('.loading');
 
-var group = new THREE.Group();
 
 
 var api = { state: 'idle' };
@@ -136,12 +136,13 @@ function init() {
         let fileAnimations = gltf.animations;
         model.scale.set(1, 1, 1);
         model.position.z = 4;
-
         scene.add(model);
-        console.log(gltf.scene);
+        model.name = 'Biniou';
+        //objects.push(model);
+        console.log(scene.children);
+        console.log(scene.children[15].name);
 
         //createMix(model, gltf.animations);
-
         mixer = new THREE.AnimationMixer(model);
         let clips = fileAnimations.filter(val => val.name !== 'idle');
         possibleAnims = clips.map(val => {
@@ -150,7 +151,9 @@ function init() {
             return clip;
         });
         let idleAnim = THREE.AnimationClip.findByName(fileAnimations, 'idle');
+        let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'Waving_updated');
         idle = mixer.clipAction(idleAnim);
+        next = mixer.clipAction(nextAnim);
         idle.play();
 
     }, undefined, function (e) {
@@ -162,15 +165,16 @@ function init() {
 
     // desk 
     var loader = new GLTFLoader();
-    loader.load('../build/images/Desk1.gltf', function (gltf) {
+    loader.load('../build/images/Desk.gltf', function (gltf) {
 
         model = gltf.scene;
         model.scale.set(0.5, 0.5, 0.5);
-        model.position.set(6, 0.1, -6);
+        model.position.set(7, 0, -4.5);
         model.rotateY(Math.PI);
-        model.name = 'desk';
         scene.add(model);
-        console.log(gltf.scene);
+        model.name = 'desk';
+        //objects.push(model);
+
     }, undefined, function (e) {
         console.error(e);
     });
@@ -181,16 +185,21 @@ function init() {
     loader.load('../build/images/SoundSystem.gltf', function (gltf) {
 
         model = gltf.scene;
-        model.name = "music";
         model.scale.set(0.7, 0.7, 0.7);
-        model.position.set(-6, 0, 2);
+        model.position.set(-9, 0, 2);
         model.rotateY(Math.PI / 2);
         scene.add(model);
-        console.log(gltf.scene);
+
+        model.name = 'music';
+        //objects.push(model);
+
         loaderAnim.className = "isloaded";
+        window.addEventListener('click', e => raycast(e));
+        window.addEventListener('touchend', e => raycast(e, true));
     }, undefined, function (e) {
         console.error(e);
     });
+
 
     window.addEventListener('resize', onWindowResize, false);
 
@@ -303,62 +312,7 @@ function fadeToAction(name, duration) {
 
 }
 
-function onWindowResize() {
-
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-}
 //
-window.addEventListener('click', e => raycast(e));
-window.addEventListener('touchend', e => raycast(e, true));
-
-function raycast(e, touch = false) {
-    var mouse = {};
-    if (touch) {
-        mouse.x = 2 * (e.changedTouches[0].clientX / window.innerWidth) - 1;
-        mouse.y = 1 - 2 * (e.changedTouches[0].clientY / window.innerHeight);
-    } else {
-        mouse.x = 2 * (e.clientX / window.innerWidth) - 1;
-        mouse.y = 1 - 2 * (e.clientY / window.innerHeight);
-    }
-    // update the picking ray with the camera and mouse position
-    raycaster.setFromCamera(mouse, camera);
-    // calculate objects intersecting the picking ray
-    var intersects = raycaster.intersectObjects(scene.children, true);
-    console.log(intersects);
-    if (intersects.length > 0) {
-        console.log("Intersected object:", intersects.length);
-        intersects[0].object.material.color.setHex(Math.random() * 0xffffff);
-    }
-
-    if (intersects[0]) {
-        var object = intersects[0].object;
-        console.log(object.name);
-        if (object.name === 'Binioufou') {
-            if (!currentlyAnimating) {
-                currentlyAnimating = true;
-                playOnClick();
-            }
-        }
-        else if (object.parent.name === 'Soundsystem') {
-            location.href = "/music";
-        }
-        else if (object.parent.name === 'Desk002') {
-            location.href = "/story";
-        }
-        else if (object.name === 'schedule') {
-            location.href = "/schedule";
-        }
-        else if (object.name === 'joinUS') {
-            location.href = "/join";
-        }
-    }
-}
-
-
 function playOnClick() {
     let anim = Math.floor(Math.random() * possibleAnims.length) + 0;
     playModifierAnimation(idle, 0.25, possibleAnims[anim], 0.25);
@@ -376,6 +330,55 @@ function playModifierAnimation(from, fSpeed, to, tSpeed) {
     }, to._clip.duration * 1000 - ((tSpeed + fSpeed) * 1000));
 }
 
+
+function raycast(e, touch = false) {
+    console.log(scene.children);
+    if (touch) {
+        mouse.x = 2 * (e.changedTouches[0].clientX / window.innerWidth) - 1;
+        mouse.y = 1 - 2 * (e.changedTouches[0].clientY / window.innerHeight);
+    } else {
+        mouse.x = 2 * (e.clientX / window.innerWidth) - 1;
+        mouse.y = 1 - 2 * (e.clientY / window.innerHeight);
+    }
+    // update the picking ray with the camera and mouse position
+    raycaster.setFromCamera(mouse, camera);
+    // calculate objects intersecting the picking ray
+    var intersects = raycaster.intersectObjects(scene.children, true);
+    console.log(intersects);
+
+    if (intersects[0]) {
+        var object = intersects[0].object;
+        console.log(object.parent.name);
+
+        if (object.name === 'planeBack') {
+            if (!currentlyAnimating) {
+                currentlyAnimating = true;
+                playModifierAnimation(idle, 0.25, next, 0.25);
+            }
+        }
+        else if (object.parent.name === 'SoundSystem') {
+            location.href = "/music";
+        }
+        else if (object.parent.name === 'Desk') {
+            location.href = "/story";
+        }
+        else if (object.name === 'schedule') {
+            location.href = "/schedule";
+        }
+        else if (object.name === 'joinUS') {
+            location.href = "/join";
+        }
+    }
+}
+
+function onWindowResize() {
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+}
 function animate() {
 
 

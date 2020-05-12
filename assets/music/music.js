@@ -1,8 +1,12 @@
-import '../main/app.css';
+import "../../node_modules/jquery/dist/jquery.js";
+import "../../node_modules/bootstrap/dist/js/bootstrap.min.js";
+import '../music/music.css';
+
 import * as THREE from '../libs/three.module.js';
-import { OrbitControls } from '../libs/OrbitControls.js';
 import { GLTFLoader } from '../libs/GLTFLoader.js';
 import { GUI } from '../libs/dat.gui.module.js';
+
+import '../music/Player.js';
 
 var canvas,
     clock,
@@ -11,16 +15,17 @@ var canvas,
     actions,
     activeAction,
     previousAction,
+    currentlyAnimating,
+    next,
     camera,
     scene,
     renderer,
-    controls,
+    renderer2,
     model,
     idle,
-    discoBall,
     raycaster = new THREE.Raycaster(),
+    mouse = new THREE.Vector2(),
     loaderAnim = document.querySelector('.loading');
-
 
 var api = { state: 'idle' };
 var red = 0x9E0000;
@@ -42,19 +47,16 @@ function init() {
     renderer.outputEncoding = THREE.sRGBEncoding;
     document.body.appendChild(renderer.domElement);
 
-
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xe0e0e0);
-
     clock = new THREE.Clock();
-
-    camera = new THREE.PerspectiveCamera(12, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 3.4, 1.97);
+    camera = new THREE.PerspectiveCamera(18, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 4, 1.97);
     camera.rotateY(Math.PI / 2);
 
 
-    // lights
 
+    // lights
 
     var light = new THREE.HemisphereLight(white, yellow, 0.7);
     scene.add(light);
@@ -73,7 +75,7 @@ function init() {
     // model
 
     var loader = new GLTFLoader();
-    loader.load('../build/images/Binioufou8.gltf', function (gltf) {
+    loader.load('../build/images/Binioufou_Fina.gltf', function (gltf) {
 
         model = gltf.scene;
         let fileAnimations = gltf.animations;
@@ -86,15 +88,18 @@ function init() {
             }
         });
         model.scale.set(0.15, 0.15, 0.15);
-        model.position.set(-7.5, 2.7, 3.2);
+        model.position.set(-8.5, 4.61, 1.7);
         model.rotateY(Math.PI / 2);
-        createGUI(model, gltf.animations);
-        let idleAnim = THREE.AnimationClip.findByName(gltf.animations, 'Waving_updated');
+        //createGUI(model, gltf.animations);
+        mixer = new THREE.AnimationMixer(model);
+        let idleAnim = THREE.AnimationClip.findByName(fileAnimations, 'samba_2');
+        let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'knocked');
         idle = mixer.clipAction(idleAnim);
+        next = mixer.clipAction(nextAnim);
         idle.play();
 
     }, undefined, function (e) {
-        console.error(e);
+        //console.error(e);
     });
 
     // sound system 
@@ -105,15 +110,16 @@ function init() {
         model.name = "music";
         scene.add(model);
         model.scale.set(0.7, 0.7, 0.7);
-        model.position.set(-6, 0, 2);
+        model.position.set(-9, 0, 2);
         model.rotateY(Math.PI / 2);
         loaderAnim.className = "isloaded";
     }, undefined, function (e) {
-        console.error(e);
+        //console.error(e);
     });
 
+    window.addEventListener('click', e => raycast(e));
+    window.addEventListener('touchend', e => raycast(e, true));
     window.addEventListener('resize', onWindowResize, false);
-
 
 }
 
@@ -153,98 +159,13 @@ function roomGeo(width, height, scaleY) {
 
     var planeLeft = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({ color: red_wall }));
     planeLeft.position.x = - height;
+    planeLeft.name = "planeLeft";
     planeLeft.position.y = - planeLeft.position.x / 2;
     planeLeft.rotateY(Math.PI / 2);
     scene.add(planeLeft);
 
 }
 
-function createGUI(model, animations) {
-
-    var states = ['shakefist_updated', 'Tada'];
-    var emotes = ['Waving_updated', 'Tada'];
-
-    gui = new GUI();
-
-    mixer = new THREE.AnimationMixer(model);
-
-
-    actions = {};
-
-    for (var i = 0; i < animations.length; i++) {
-        var clip = animations[i];
-        var action = mixer.clipAction(clip);
-        actions[clip.name] = action;
-
-        if (emotes.indexOf(clip.name) >= 0 || states.indexOf(clip.name) >= 4) {
-
-            action.clampWhenFinished = true;
-            action.loop = THREE.LoopRepeat;
-
-        }
-
-    }
-
-    // states
-
-    var statesFolder = gui.addFolder('States');
-
-    var clipCtrl = statesFolder.add(api, 'state').options(states);
-
-    clipCtrl.onChange(function () {
-
-        fadeToAction(api.state, 0.5);
-
-    });
-
-    statesFolder.open();
-
-    // emotes
-
-    var emoteFolder = gui.addFolder('Emotes');
-
-    function createEmoteCallback(name) {
-
-        api[name] = function () {
-
-            fadeToAction(name, 0.2);
-
-            mixer.addEventListener('finished', restoreState);
-
-        };
-
-        emoteFolder.add(api, name);
-
-    }
-
-    function restoreState() {
-
-        mixer.removeEventListener('finished', restoreState);
-
-        fadeToAction(api.state, 0.2);
-
-    }
-
-    for (var i = 0; i < emotes.length; i++) {
-
-        createEmoteCallback(emotes[i]);
-
-    }
-
-
-    // expressions
-
-    // face = model.getObjectByName('Head_2');
-    // var expressions = Object.keys(face.morphTargetDictionary);
-    // var expressionFolder = gui.addFolder('Expressions');
-    // for (var i = 0; i < expressions.length; {expressionFolder.add(face.morphTargetInfluences, i, 0, 1, 0.01).name(expressions[i]);}
-
-    activeAction = actions['Waving_updated'];
-    activeAction.play();
-
-    // expressionFolder.open();
-
-}
 
 function fadeToAction(name, duration) {
 
@@ -261,6 +182,18 @@ function fadeToAction(name, duration) {
 
 }
 
+function playModifierAnimation(from, fSpeed, to, tSpeed) {
+    to.setLoop(THREE.LoopOnce);
+    to.reset();
+    to.play();
+    from.crossFadeTo(to, fSpeed, true);
+    setTimeout(function () {
+        from.enabled = true;
+        to.crossFadeTo(from, tSpeed, true);
+        currentlyAnimating = false;
+    }, to._clip.duration * 1000 - ((tSpeed + fSpeed) * 1000));
+}
+
 function onWindowResize() {
 
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -268,16 +201,13 @@ function onWindowResize() {
 
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    controls.handleResize();
+
 
 }
 
 //
-window.addEventListener('click', e => raycast(e));
-window.addEventListener('touchend', e => raycast(e, true));
 
 function raycast(e, touch = false) {
-    var mouse = {};
     if (touch) {
         mouse.x = 2 * (e.changedTouches[0].clientX / window.innerWidth) - 1;
         mouse.y = 1 - 2 * (e.changedTouches[0].clientY / window.innerHeight);
@@ -290,12 +220,14 @@ function raycast(e, touch = false) {
 
     // calculate objects intersecting the picking ray
     var intersects = raycaster.intersectObjects(scene.children, true);
-
     if (intersects[0]) {
-        var object = intersects[0].object;
-        console.log(object.name)
-        if (object.name === 'joinUS') {
-            location.href = "/join";
+        var object = intersects[0].object.parent;
+        console.log(object.name);
+        if (object.name === 'SoundSystem') {
+            if (!currentlyAnimating) {
+                currentlyAnimating = true;
+                playModifierAnimation(idle, 0.25, next, 0.25);
+            }
         }
         else if (object.name === 'schedule') {
             location.href = "/schedule";
@@ -307,8 +239,9 @@ function raycast(e, touch = false) {
 function animate() {
 
 
-    requestAnimationFrame(animate);
     render();
+    requestAnimationFrame(animate);
+
 
 
 }
