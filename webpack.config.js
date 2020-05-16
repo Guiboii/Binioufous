@@ -17,8 +17,9 @@ Encore
     .copyFiles({
         from: './assets',
         to: 'images/[name].[ext]',
-        pattern: /\.(glb)$/
+        pattern: /\.(glb|gltf|fbx|gif|png|mp4|mp3|mpga|jpg)$/
     })
+
 
     /*
      * ENTRY CONFIG
@@ -30,7 +31,11 @@ Encore
      * and one CSS file (e.g. app.css) if your JavaScript imports CSS.
      */
     .addEntry('app', './assets/main/app.js')
-    //.addEntry('page1', './assets/js/page1.js')
+    .addEntry('index', './assets/mascotte/mascotte.js')
+    .addEntry('music', './assets/music/music.js')
+    .addEntry('schedule', './assets/schedule/schedule.js')
+    .addEntry('story', './assets/story/story.js')
+    .addEntry('join', './assets/login/join.js')
     //.addEntry('page2', './assets/js/page2.js')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
@@ -78,3 +83,4 @@ Encore
     ;
 
 module.exports = Encore.getWebpackConfig();
+

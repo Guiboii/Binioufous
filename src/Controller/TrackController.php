@@ -42,7 +42,7 @@ class TrackController extends AbstractController
              if ($trackFile) {
                 $originalFilename = pathinfo($trackFile->getClientOriginalName(), PATHINFO_FILENAME);
                 $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$trackFile->guessExtension();
+                $newFilename = $safeFilename.'.'.$trackFile->guessExtension();
 
                 try {
                     $trackFile->move(

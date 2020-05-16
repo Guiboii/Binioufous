@@ -16,4 +16,12 @@ class StoryController extends AbstractController
             'controller_name' => 'StoryController',
         ]);
     }
+
+/**
+     * @Route("/story/mini", name="minisite")
+     */
+    public function mini()
+    {
+        return $this->render('story/minisite.html.twig');
+    }
 }
