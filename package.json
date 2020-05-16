@@ -18,7 +18,7 @@
     "dependencies": {
         "bootstrap": "^4.4.1",
         "bootstrap-icons": "^1.0.0-alpha3",
-        "jquery": "^1.12.4",
+        "jquery": "^3.5.0",
         "popper.js": "^1.16.1",
         "wavesurfer.js": "^3.3.3"
     }
