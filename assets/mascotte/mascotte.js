@@ -1,3 +1,6 @@
+import "../../node_modules/jquery/dist/jquery.js";
+import "../../node_modules/bootstrap/dist/js/bootstrap.min.js";
+
 import * as THREE from '../libs/three.module.js';
 import { OrbitControls } from '../libs/OrbitControls.js';
 import { GLTFLoader } from '../libs/GLTFLoader.js';
@@ -5,13 +8,9 @@ import { GLTFLoader } from '../libs/GLTFLoader.js';
 var canvas,
     clock,
     mixer,
-    actions,
-    activeAction,
-    previousAction,
     currentlyAnimating,
     next,
     carpet,
-    possibleAnims,
     camera,
     scene,
     renderer,
@@ -23,9 +22,6 @@ var canvas,
     loaderAnim = document.querySelector('.loading');
 
 
-
-var api = { state: 'idle' };
-var red = 0x9E0000;
 var red_wall = 0xBC2727;
 var yellow = 0xF2B233;
 var green = 0x1F6652;
@@ -103,26 +99,47 @@ function init() {
     scene.add(discoBall);
 
     // flyer back
-    var video = document.getElementById('video');
+    var video = document.getElementById('video1');
     video.play();
     var texture = new THREE.VideoTexture(video);
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
     texture.format = THREE.RGBFormat;
+    texture.encoding = THREE.sRGBEncoding;
 
     var flyerBack = new THREE.Mesh(
         new THREE.PlaneBufferGeometry(4.5, 6),
-        new THREE.MeshBasicMaterial({ color: 0xffffff, map: texture }));
+        new THREE.MeshToonMaterial({
+            color: 0xffffff,
+            map: texture,
+
+        }));
     flyerBack.position.set(-5.5, 5, -9.9);
     flyerBack.name = "joinUS";
     scene.add(flyerBack);
 
 
     // flyer right
+    var video = document.getElementById('video2');
+    video.play();
+    var texture = new THREE.VideoTexture(video);
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.format = THREE.RGBFormat;
+    texture.encoding = THREE.sRGBEncoding;
+
+    var flyerRightVid = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry(5.5, 5.3),
+        new THREE.MeshToonMaterial({ color: 0xffffff, map: texture }));
+    flyerRightVid.position.set(9.88, 6.1, 2);
+    flyerRightVid.rotateY(- Math.PI / 2);
+    flyerRightVid.name = "soucoupe";
+    scene.add(flyerRightVid);
+
     var texture = new THREE.TextureLoader().load("../build/images/flyer002.png");
     var flyerRight = new THREE.Mesh(
         new THREE.PlaneBufferGeometry(6, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffffff, map: texture }));
+        new THREE.MeshToonMaterial({ color: 0xffffff, map: texture }));
     flyerRight.position.set(9.9, 5, 2);
     flyerRight.rotateY(- Math.PI / 2);
     flyerRight.name = "schedule";
@@ -132,7 +149,7 @@ function init() {
     // model
 
     var loader = new GLTFLoader();
-    loader.load('../build/images/Binioufou_Final.gltf', function (gltf) {
+    loader.load('../build/images/Binioufou_Final4.gltf', function (gltf) {
 
         model = gltf.scene;
         let fileAnimations = gltf.animations;
@@ -140,21 +157,11 @@ function init() {
         model.position.z = 4;
         scene.add(model);
         model.name = 'Biniou';
-        //objects.push(model);
-        console.log(scene.children);
-        console.log(scene.children[15].name);
 
-        //createMix(model, gltf.animations);
         mixer = new THREE.AnimationMixer(model);
-        let clips = fileAnimations.filter(val => val.name !== 'idle');
-        possibleAnims = clips.map(val => {
-            let clip = THREE.AnimationClip.findByName(clips, val.name);
-            clip = mixer.clipAction(clip);
-            return clip;
-        });
         let idleAnim = THREE.AnimationClip.findByName(fileAnimations, 'idle');
-        let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'Waving_updated');
-        let carpetAnim = THREE.AnimationClip.findByName(fileAnimations, 'twist');
+        let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'waving2');
+        let carpetAnim = THREE.AnimationClip.findByName(fileAnimations, 'foryou2');
         idle = mixer.clipAction(idleAnim);
         next = mixer.clipAction(nextAnim);
         carpet = mixer.clipAction(carpetAnim);
@@ -177,7 +184,6 @@ function init() {
         model.rotateY(Math.PI);
         scene.add(model);
         model.name = 'desk';
-        //objects.push(model);
 
     }, undefined, function (e) {
         console.error(e);
@@ -193,18 +199,16 @@ function init() {
         model.position.set(-9, 0, 2);
         model.rotateY(Math.PI / 2);
         scene.add(model);
-
         model.name = 'music';
-        //objects.push(model);
 
         loaderAnim.className = "isloaded";
-        window.addEventListener('click', e => raycast(e));
-        window.addEventListener('touchend', e => raycast(e, true));
+
     }, undefined, function (e) {
         console.error(e);
     });
 
-
+    window.addEventListener('click', e => raycast(e));
+    window.addEventListener('touchend', e => raycast(e, true));
     window.addEventListener('resize', onWindowResize, false);
 
 }
@@ -252,76 +256,6 @@ function roomGeo(width, height, scaleY) {
 
 }
 
-function createMix(model, animations) {
-
-    var anims = ['Waving_updated', 'Tada', 'shakefist_updated'];
-
-    mixer = new THREE.AnimationMixer(model);
-
-    actions = {};
-
-    for (var i = 0; i < animations.length; i++) {
-        var clip = animations[i];
-        var action = mixer.clipAction(clip);
-        actions[clip.name] = action;
-
-        // if (anims.indexOf(clip.name) >= 0) {
-        action.clampWhenFinished = true;
-        action.loop = THREE.LoopOnce;
-        //    }
-    }
-
-
-    for (var i = 0; i < anims.length; i++) {
-        createAnimCallback(anims[i]);
-    }
-
-    activeAction = actions['Tada'];
-    activeAction.play();
-
-}
-
-function createAnimCallback(name) {
-
-    api[name] = function () {
-
-        fadeToAction(name, 0.2);
-
-        mixer.addEventListener('finished', restoreState);
-
-    };
-
-}
-
-function restoreState() {
-
-    mixer.removeEventListener('finished', restoreState);
-
-    fadeToAction(api.state, 0.2);
-
-}
-
-function fadeToAction(name, duration) {
-
-    previousAction = activeAction;
-    activeAction = actions[name];
-
-    if (previousAction !== activeAction) {
-
-        previousAction.fadeOut(duration);
-
-    }
-
-    activeAction.reset().setEffectiveTimeScale(1).setEffectiveWeight(1).fadeIn(duration).play();
-
-}
-
-//
-function playOnClick() {
-    let anim = Math.floor(Math.random() * possibleAnims.length) + 0;
-    playModifierAnimation(idle, 0.25, possibleAnims[anim], 0.25);
-}
-
 function playModifierAnimation(from, fSpeed, to, tSpeed) {
     to.setLoop(THREE.LoopOnce);
     to.reset();
@@ -333,7 +267,6 @@ function playModifierAnimation(from, fSpeed, to, tSpeed) {
         currentlyAnimating = false;
     }, to._clip.duration * 1000 - ((tSpeed + fSpeed) * 1000));
 }
-
 
 function raycast(e, touch = false) {
     console.log(scene.children);
@@ -366,7 +299,7 @@ function raycast(e, touch = false) {
         else if (object.parent.name === 'Desk') {
             location.href = "/story";
         }
-        else if (object.name === 'schedule') {
+        else if (object.name === 'soucoupe') {
             location.href = "/schedule";
         }
         else if (object.name === 'joinUS') {
@@ -383,6 +316,7 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 
 }
+
 function animate() {
 
 
@@ -391,6 +325,7 @@ function animate() {
 
 
 }
+
 function render() {
 
     var delta = clock.getDelta();

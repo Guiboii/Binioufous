@@ -1,5 +1,7 @@
+import "../../node_modules/jquery/dist/jquery.js";
+import "../../node_modules/bootstrap/dist/js/bootstrap.min.js";
+
 import * as THREE from '../libs/three.module.js';
-import { OrbitControls } from '../libs/OrbitControls.js';
 import { GLTFLoader } from '../libs/GLTFLoader.js';
 
 var canvas,
@@ -13,17 +15,14 @@ var canvas,
     camera,
     scene,
     renderer,
-    controls,
     model,
     idle,
     next,
-    discoBall,
     raycaster = new THREE.Raycaster(),
     loaderAnim = document.querySelector('.loading');
 
 
-var api = { state: 'idle' };
-var red = 0x9E0000;
+
 var red_wall = 0xBC2727;
 var yellow = 0xF2B233;
 var green = 0x1F6652;
@@ -48,8 +47,7 @@ function init() {
     scene.fog = new THREE.Fog(0xe0e0e0, 20, 100);
 
     clock = new THREE.Clock();
-    camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-    // camera.position.set(0, 2, 12);
+    camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(0, 4.3, 2);
     camera.rotateY(-Math.PI / 2);
 
@@ -78,35 +76,45 @@ function init() {
     flyerRight.position.set(9.9, 4.5, 0);
     flyerRight.rotateY(- Math.PI / 2);
     flyerRight.name = "schedule";
-    scene.add(flyerRight);
+    //scene.add(flyerRight);
+
+    // flyer back
+    var video = document.getElementById('video1');
+    video.play();
+    var texture = new THREE.VideoTexture(video);
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.format = THREE.RGBFormat;
+    texture.encoding = THREE.sRGBEncoding;
+
+    var flyerBack = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry(2.3, 3),
+        new THREE.MeshToonMaterial({
+            color: 0xffffff,
+            map: texture,
+
+        }));
+    flyerBack.position.set(9.9, 6.5, -5);
+    flyerBack.rotateY(- Math.PI / 2);
+    flyerBack.name = "joinUS";
+    scene.add(flyerBack);
 
 
     // model
 
     var loader = new GLTFLoader();
-    loader.load('../build/images/Binioufou_Final.gltf', function (gltf) {
+    loader.load('../build/images/Binioufou_Final4.gltf', function (gltf) {
 
         model = gltf.scene;
         let fileAnimations = gltf.animations;
-        //model.scale.set(1, 1, 1);
-        //model.position.z = 4;
-        model.scale.set(0.4, 0.4, 0.4);
-        model.position.set(9.5, 0, 7);
+        model.scale.set(0.45, 0.45, 0.45);
+        model.position.set(9.1, 0, 5);
         model.rotateY(- Math.PI / 2);
         scene.add(model);
-        //createMix(model, gltf.animations);
 
         mixer = new THREE.AnimationMixer(model);
-
-        let clips = fileAnimations.filter(val => val.name !== 'walkturn');
-
-        possibleAnims = clips.map(val => {
-            let clip = THREE.AnimationClip.findByName(clips, val.name);
-            clip = mixer.clipAction(clip);
-            return clip;
-        });
-        let idleAnim = THREE.AnimationClip.findByName(fileAnimations, 'walkturn');
-        let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'knocked');
+        let idleAnim = THREE.AnimationClip.findByName(fileAnimations, 'walkturn2');
+        let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'knocked2');
         idle = mixer.clipAction(idleAnim);
         next = mixer.clipAction(nextAnim);
         idle.play();
@@ -129,7 +137,8 @@ function init() {
     }, undefined, function (e) {
         console.error(e);
     });
-
+    window.addEventListener('click', e => raycast(e));
+    window.addEventListener('touchend', e => raycast(e, true));
     window.addEventListener('resize', onWindowResize, false);
 
 }
@@ -177,70 +186,6 @@ function roomGeo(width, height, scaleY) {
 
 }
 
-function createMix(model, animations) {
-
-    var anims = ['Waving_updated', 'Tada', 'shakefist_updated'];
-
-    mixer = new THREE.AnimationMixer(model);
-
-    actions = {};
-
-    for (var i = 0; i < animations.length; i++) {
-        var clip = animations[i];
-        var action = mixer.clipAction(clip);
-        actions[clip.name] = action;
-
-        // if (anims.indexOf(clip.name) >= 0) {
-        action.clampWhenFinished = true;
-        action.loop = THREE.LoopOnce;
-        //    }
-    }
-
-
-    for (var i = 0; i < anims.length; i++) {
-        createAnimCallback(anims[i]);
-    }
-
-    activeAction = actions['Tada'];
-    activeAction.play();
-
-}
-
-function createAnimCallback(name) {
-
-    api[name] = function () {
-
-        fadeToAction(name, 0.2);
-
-        mixer.addEventListener('finished', restoreState);
-
-    };
-
-}
-
-function restoreState() {
-
-    mixer.removeEventListener('finished', restoreState);
-
-    fadeToAction(api.state, 0.2);
-
-}
-
-function fadeToAction(name, duration) {
-
-    previousAction = activeAction;
-    activeAction = actions[name];
-
-    if (previousAction !== activeAction) {
-
-        previousAction.fadeOut(duration);
-
-    }
-
-    activeAction.reset().setEffectiveTimeScale(1).setEffectiveWeight(1).fadeIn(duration).play();
-
-}
-
 function onWindowResize() {
 
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -250,8 +195,6 @@ function onWindowResize() {
 
 }
 //
-window.addEventListener('click', e => raycast(e));
-window.addEventListener('touchend', e => raycast(e, true));
 
 function raycast(e, touch = false) {
     var mouse = {};
@@ -277,8 +220,8 @@ function raycast(e, touch = false) {
                 playModifierAnimation(idle, 0.25, next, 0.25);
             }
         }
-        else if (object.name === 'schedule') {
-            window.open('http://www.youtube.com', '_blank');
+        else if (object.name === 'joinUS') {
+            location.href = "/join";
         }
         else if (object.name === 'disco') {
             location.href = "/";
@@ -286,10 +229,6 @@ function raycast(e, touch = false) {
     }
 }
 
-function playOnClick() {
-    let anim = Math.floor(Math.random() * possibleAnims.length) + 0;
-    playModifierAnimation(idle, 0.25, possibleAnims[anim], 0.25);
-}
 
 function playModifierAnimation(from, fSpeed, to, tSpeed) {
     to.setLoop(THREE.LoopOnce);
@@ -314,11 +253,9 @@ function animate() {
 function render() {
 
     var delta = clock.getDelta();
-    // controls.update();
     if (mixer) {
         mixer.update(delta);
     }
-
     renderer.render(scene, camera);
 
 }

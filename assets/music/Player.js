@@ -1,3 +1,4 @@
+
 // Create a WaveSurfer instance
 var wavesurfer;
 
@@ -12,23 +13,14 @@ document.addEventListener('DOMContentLoaded', function () {
         height: 91,
         //backend: 'MediaElement',
         plugins: [
-            WaveSurfer.regions.create({
-                regions: [
-                    {
-                        id: 'loopMe',
-                        start: 5,
-                        end: 25,
-                        loop: false,
-                        color: 'hsla(163, 53%, 26%, 0.4)'
-                    }
-                ],
-                dragSelection: {
-                    slop: 5
-                }
-            })
+            WaveSurfer.regions.create()
         ]
     });
 });
+
+document.querySelector('#slider').oninput = function () {
+    wavesurfer.zoom(Number(this.value));
+};
 
 
 // Bind controls
@@ -57,10 +49,24 @@ document.addEventListener('DOMContentLoaded', function () {
     var loopRegion = document.querySelector('#loopRegion');
     loopRegion.addEventListener('click', function () {
 
-        var region = wavesurfer.regions.list['loopMe'];
-        region.playLoop();
-
-
+        if (hasClass(loopRegion, 'looping')) {
+            loopRegion.classList.remove('looping');
+            wavesurfer.clearRegions();
+            //wavesurfer.play();
+        } else {
+            wavesurfer.clearRegions();
+            loopRegion.classList.add('looping');
+            wavesurfer.addRegion({
+                id: 'loop',
+                start: 5,
+                end: 25,
+                loop: false,
+                color: 'hsla(163, 53%, 26%, 0.4)'
+            });
+            wavesurfer.regions.list['loop'].playLoop();
+            //var region = wavesurfer.regions.list['loopMe'];
+            //region.playLoop();
+        }
     });
 
 
@@ -101,3 +107,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Load the first track
     setCurrentSong(currentTrack);
 });
+
+
+function hasClass(elem, className) {
+    return new RegExp(' ' + className + ' ').test(' ' + elem.className + ' ');
+}

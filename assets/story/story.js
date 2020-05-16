@@ -1,34 +1,31 @@
+import "../../node_modules/jquery/dist/jquery.js";
+import "../../node_modules/bootstrap/dist/js/bootstrap.min.js";
+// import '../story/story.css';
+
 import * as THREE from '../libs/three.module.js';
-import { OrbitControls } from '../libs/OrbitControls.js';
 import { GLTFLoader } from '../libs/GLTFLoader.js';
 
 var canvas,
     clock,
     mixer,
-    actions,
-    activeAction,
-    previousAction,
+    mixerC,
     currentlyAnimating,
     next,
-    possibleAnims,
     camera,
     scene,
     renderer,
-    controls,
     model,
     idle,
-    discoBall,
     raycaster = new THREE.Raycaster(),
+    mouse = new THREE.Vector2(),
     loaderAnim = document.querySelector('.loading');
 
 
-var api = { state: 'idle' };
-var red = 0x9E0000;
+
 var red_wall = 0xBC2727;
 var yellow = 0xF2B233;
 var green = 0x1F6652;
 var white = 0xffffff;
-var black = 0x000000;
 
 init();
 animate();
@@ -49,8 +46,7 @@ function init() {
 
     clock = new THREE.Clock();
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-    // camera.position.set(0, 2, 12);
-    camera.position.set(5.9, 2.8, -7.8);
+    camera.position.set(5.6, 2.8, -7.8);
     camera.rotateY(- Math.PI);
 
 
@@ -69,42 +65,21 @@ function init() {
     // room
     roomGeo(20, 10, 2);
 
-
-    // flyer right
-    var texture = new THREE.TextureLoader().load("../build/images/flyer002.png");
-    var flyerRight = new THREE.Mesh(
-        new THREE.PlaneBufferGeometry(6, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffffff, map: texture }));
-    flyerRight.position.set(9.9, 5, 2);
-    flyerRight.rotateY(- Math.PI / 2);
-    flyerRight.name = "schedule";
-    //scene.add(flyerRight);
-
-
     // model
 
     var loader = new GLTFLoader();
-    loader.load('../build/images/Binioufou_Final.gltf', function (gltf) {
+    loader.load('../build/images/Binioufou_Final4.gltf', function (gltf) {
 
         model = gltf.scene;
         let fileAnimations = gltf.animations;
-        model.scale.set(0.15, 0.15, 0.15);
-        model.position.set(6.7, 2.25, -6.5);
-        model.rotateY(- Math.PI + 20);
+        model.scale.set(0.12, 0.12, 0.12);
+        model.position.set(6.6, 2.25, -6.5);
+        model.rotateY(- Math.PI - 50);
         scene.add(model);
-        //createMix(model, gltf.animations);
 
         mixer = new THREE.AnimationMixer(model);
-
-        let clips = fileAnimations.filter(val => val.name !== 'idle');
-
-        possibleAnims = clips.map(val => {
-            let clip = THREE.AnimationClip.findByName(clips, val.name);
-            clip = mixer.clipAction(clip);
-            return clip;
-        });
         let idleAnim = THREE.AnimationClip.findByName(fileAnimations, 'twist');
-        let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'taada');
+        let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'taada2');
         idle = mixer.clipAction(idleAnim);
         next = mixer.clipAction(nextAnim);
         idle.play();
@@ -112,6 +87,32 @@ function init() {
     }, undefined, function (e) {
         console.error(e);
     });
+
+    // Soucoupe 3D MODEL
+    var loader = new GLTFLoader();
+    loader.load('../build/images/Soucoupe.gltf', function (gltf) {
+
+        model = gltf.scene;
+        model.position.set(7, 3, -6);
+        model.scale.set(0.05, 0.05, 0.05);
+        model.rotateY(Math.PI);
+        model.name = "soucoupe";
+        scene.add(model);
+
+        mixerC = new THREE.AnimationMixer(model);
+        let flyAnim = THREE.AnimationClip.findByName(gltf.animations, 'flying');
+        let fly = mixerC.clipAction(flyAnim);
+        fly.play();
+    }, undefined, function (e) {
+        console.error(e);
+    });
+    var planecontact = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry(1.5, 0.5),
+        new THREE.MeshPhongMaterial({ color: 0xffffff, transparent: true, opacity: 0 }));
+    planecontact.position.set(5.3, 2.3, -6.8);
+    planecontact.rotateY(Math.PI);
+    planecontact.name = "contactPlane";
+    scene.add(planecontact);
 
     // desk 
     var loader = new GLTFLoader();
@@ -128,6 +129,8 @@ function init() {
         console.error(e);
     });
 
+    window.addEventListener('click', e => raycast(e));
+    window.addEventListener('touchend', e => raycast(e, true));
     window.addEventListener('resize', onWindowResize, false);
 
 }
@@ -174,69 +177,6 @@ function roomGeo(width, height, scaleY) {
 
 }
 
-function createMix(model, animations) {
-
-    var anims = ['Waving_updated', 'Tada', 'shakefist_updated'];
-
-    mixer = new THREE.AnimationMixer(model);
-
-    actions = {};
-
-    for (var i = 0; i < animations.length; i++) {
-        var clip = animations[i];
-        var action = mixer.clipAction(clip);
-        actions[clip.name] = action;
-
-        // if (anims.indexOf(clip.name) >= 0) {
-        action.clampWhenFinished = true;
-        action.loop = THREE.LoopOnce;
-        //    }
-    }
-
-
-    for (var i = 0; i < anims.length; i++) {
-        createAnimCallback(anims[i]);
-    }
-
-    activeAction = actions['Tada'];
-    activeAction.play();
-
-}
-
-function createAnimCallback(name) {
-
-    api[name] = function () {
-
-        fadeToAction(name, 0.2);
-
-        mixer.addEventListener('finished', restoreState);
-
-    };
-
-}
-
-function restoreState() {
-
-    mixer.removeEventListener('finished', restoreState);
-
-    fadeToAction(api.state, 0.2);
-
-}
-
-function fadeToAction(name, duration) {
-
-    previousAction = activeAction;
-    activeAction = actions[name];
-
-    if (previousAction !== activeAction) {
-
-        previousAction.fadeOut(duration);
-
-    }
-
-    activeAction.reset().setEffectiveTimeScale(1).setEffectiveWeight(1).fadeIn(duration).play();
-
-}
 
 function onWindowResize() {
 
@@ -247,11 +187,8 @@ function onWindowResize() {
 
 }
 //
-window.addEventListener('click', e => raycast(e));
-window.addEventListener('touchend', e => raycast(e, true));
 
 function raycast(e, touch = false) {
-    var mouse = {};
     if (touch) {
         mouse.x = 2 * (e.changedTouches[0].clientX / window.innerWidth) - 1;
         mouse.y = 1 - 2 * (e.changedTouches[0].clientY / window.innerHeight);
@@ -261,7 +198,6 @@ function raycast(e, touch = false) {
     }
     // update the picking ray with the camera and mouse position
     raycaster.setFromCamera(mouse, camera);
-
     // calculate objects intersecting the picking ray
     var intersects = raycaster.intersectObjects(scene.children, true);
     console.log(intersects);
@@ -274,19 +210,20 @@ function raycast(e, touch = false) {
                 playModifierAnimation(idle, 0.25, next, 0.25);
             }
         }
-        else if (object.name === 'schedule') {
-            location.href = "/schedule";
+        else if (object.name === 'contactPlane') {
+            document.getElementById('contactForm').classList.remove('d-none');
         }
-        else if (object.name === 'joinUS') {
+        else if (object.parent.name === 'Soucoupe') {
             location.href = "/join";
         }
     }
 }
 
-function playOnClick() {
-    let anim = Math.floor(Math.random() * possibleAnims.length) + 0;
-    playModifierAnimation(idle, 0.25, possibleAnims[anim], 0.25);
-}
+var close = document.querySelector('.close');
+close.addEventListener('click', function () {
+    document.getElementById('contactForm').classList.add('d-none');
+});
+
 
 function playModifierAnimation(from, fSpeed, to, tSpeed) {
     to.setLoop(THREE.LoopOnce);
@@ -311,12 +248,12 @@ function animate() {
 function render() {
 
     var delta = clock.getDelta();
-    // controls.update();
     if (mixer) {
         mixer.update(delta);
     }
-    //discoBall.rotation.y += 0.005;
-
+    if (mixerC) {
+        mixerC.update(delta);
+    }
     renderer.render(scene, camera);
 
 }

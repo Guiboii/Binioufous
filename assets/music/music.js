@@ -4,13 +4,11 @@ import '../music/music.css';
 
 import * as THREE from '../libs/three.module.js';
 import { GLTFLoader } from '../libs/GLTFLoader.js';
-import { GUI } from '../libs/dat.gui.module.js';
 
 import '../music/Player.js';
 
 var canvas,
     clock,
-    gui,
     mixer,
     actions,
     activeAction,
@@ -20,15 +18,13 @@ var canvas,
     camera,
     scene,
     renderer,
-    renderer2,
     model,
     idle,
     raycaster = new THREE.Raycaster(),
     mouse = new THREE.Vector2(),
     loaderAnim = document.querySelector('.loading');
 
-var api = { state: 'idle' };
-var red = 0x9E0000;
+
 var red_wall = 0xBC2727;
 var yellow = 0xF2B233;
 var green = 0x1F6652;
@@ -55,7 +51,6 @@ function init() {
     camera.rotateY(Math.PI / 2);
 
 
-
     // lights
 
     var light = new THREE.HemisphereLight(white, yellow, 0.7);
@@ -71,29 +66,21 @@ function init() {
 
     roomGeo(20, 10, 2);
 
-
     // model
 
     var loader = new GLTFLoader();
-    loader.load('../build/images/Binioufou_Final.gltf', function (gltf) {
+    loader.load('../build/images/Binioufou_Final4.gltf', function (gltf) {
 
         model = gltf.scene;
         let fileAnimations = gltf.animations;
-        model.name = "binioufou";
         scene.add(model);
-        model.traverse(o => {
-            if (o.isMesh) {
-                o.castShadow = true;
-                o.receiveShadow = true;
-            }
-        });
+
         model.scale.set(0.15, 0.15, 0.15);
         model.position.set(-8.5, 4.61, 1.7);
         model.rotateY(Math.PI / 2);
-        //createGUI(model, gltf.animations);
         mixer = new THREE.AnimationMixer(model);
         let idleAnim = THREE.AnimationClip.findByName(fileAnimations, 'samba_2');
-        let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'playing');
+        let nextAnim = THREE.AnimationClip.findByName(fileAnimations, 'playing2');
         idle = mixer.clipAction(idleAnim);
         next = mixer.clipAction(nextAnim);
         idle.play();
@@ -226,7 +213,7 @@ function raycast(e, touch = false) {
         if (object.name === 'SoundSystem') {
             if (!currentlyAnimating) {
                 currentlyAnimating = true;
-                playModifierAnimation(idle, 0.25, next, 0.25);
+                playModifierAnimation(idle, 0.1, next, 0.1);
             }
         }
         else if (object.name === 'schedule') {

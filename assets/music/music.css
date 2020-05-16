@@ -11,7 +11,7 @@ iframe {
     z-index: 900;
         overflow: hidden;
     display: block;
-    width: 641px;
+    width: 642px;
 }
 
 table {
@@ -23,11 +23,26 @@ table {
     width: 100%;
     height: 186px;
     overflow: scroll;
+    margin-left: 0;
 }
-.playlist-wrap {
-    background: transparent;
+.player-wrap .row {
+    height: 91px;
     width: 100%;
+    background: #695044;
+    margin: 0;
+}
+
+.player-wrap .row.playerButtons {
+    margin-top: 4px;
+    padding: 4px;
+    height: 39px;
+}
+
+
+.playlist-wrap {
+    background: #4a3d37;
     height: 237px;
+    width: 641px;
     margin-top: 0;
     border: 5px solid #895b41;  
     overflow: hidden;
@@ -38,6 +53,16 @@ table {
     overflow: scroll;
     display: inline-block;
     width: 50%;
+}
+
+
+.members-only form#loginForm {
+    padding: 12%;
+    border: 5px solid #4a3d37;
+    height: 100%;
+    position: relative;
+    margin-top: 0;
+    top: -5px;
 }
 
 .accordion button {
@@ -61,28 +86,25 @@ table {
 }
 
 #uploadNew {
-    width: 45%;
-    background: #695044;
+    width: 35%;
 }
-#stopTrack, #playPause {
-    width: 46px;
-    background: #695044;
 
+input#slider {  
+    width: 15%;
+    margin-left: 10px;
+}
+
+#loopRegion, #uploadNew {
+    margin-top: 5px;
 }
 
 #loopRegion, a#loopRegion:hover {
-    width: 25%;
-    margin-top: 4px;
+    margin-left: 5px;
     color: rgba(0, 0, 0, 0.4);
-    margin-left: 80px;
-}
-#loopRegion { float: right;}
-.playerButtons {
-    margin-top: 8px;
 }
 
 #uploadNew, a#uploadNew:hover {
-    padding: 0 25px;
+    padding: 0 0;
     color: rgba(0, 0, 0, 0.4);
     text-decoration: none;
 }
@@ -91,6 +113,7 @@ table {
     color:#9e0000;
     width: 32px;
     height: 32px;
+    margin-top: -3px;
 }
 #play svg {
     color:#1F6652;
@@ -108,11 +131,15 @@ table {
     height: 42px;
 }
 #loop svg {
-    color:#F2B233;
+    color: rgba(0, 0, 0, 0.4);
     width: 32px;
     height: 32px;
-    margin-top: 4px;
+    margin-top: 0px;
 }
+#loopRegion.looping #loop svg {
+    color:#F2B233;
+}
+
 
 .card, .accordion > .card:not(:last-of-type) {
     border: 0;

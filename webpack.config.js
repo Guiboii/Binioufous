@@ -17,7 +17,7 @@ Encore
     .copyFiles({
         from: './assets',
         to: 'images/[name].[ext]',
-        pattern: /\.(glb|gltf|fbx|gif|png|mp4|mp3|mpga)$/
+        pattern: /\.(glb|gltf|fbx|gif|png|mp4|mp3|mpga|jpg)$/
     })
 
 
